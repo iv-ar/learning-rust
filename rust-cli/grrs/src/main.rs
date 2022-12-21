@@ -1,5 +1,4 @@
-use std::io::{BufReader, BufRead};
-use std::fs::File;
+use std::fs::{File};
 use::clap::Parser;
 
 #[derive(Parser)]
@@ -8,14 +7,22 @@ struct Cli {
     path: std::path::PathBuf,
 }
 
-
 fn main() {
     let args = Cli::parse();
-    //println!("pattern: {}, path: {}",args.pattern, args.path.display());
+    if !args.path.exists() {
+        eprintln!("The file at '{}' does not exist", &args.path.display());
+        return;
+    }
+    if args.pattern.is_empty() {
+        eprintln!("No pattern was supplied, see --help");
+        return;
+    }
     let file = File::open(args.path).expect("could not read file");
-    let mut reader = BufReader::new(file);
-    for line in reader.lines() {
-        if line.unwrap_or_default().contains(&args.pattern) {
-        }
+    let matches = grrs::find_matches(&file, &args.pattern).unwrap();
+    if matches.len() < 1 {
+        return;
+    }
+    for line in matches {
+        println!("{}", line);
     }
 }
